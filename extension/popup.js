@@ -10,7 +10,7 @@ btn.addEventListener("click", function() {
 
        
         function fetchSummary() {
-            fetch('http://localhost:5000/summary?url=' + encodeURIComponent(url))
+            fetch('http://localhost:5500/summary?url=' + encodeURIComponent(url))
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok');

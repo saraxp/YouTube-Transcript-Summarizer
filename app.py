@@ -5,25 +5,11 @@ from youtube_transcript_api import YouTubeTranscriptApi
 from transformers import pipeline
 
 app = Flask(__name__)
-CORS(app)  
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True, allow_headers=["Content-Type", "Authorization"], methods=["GET", "POST"])
 
 # Initialize summarization pipeline
 summarizer = pipeline("summarization")
 
-def validate_youtube_url(url):
-    """
-    Validates if the provided URL is a valid YouTube video URL.
-    Returns True if valid, False otherwise.
-    """
-    youtube_url_pattern = (
-        r'(https?://)?(www\.)?'
-        '(youtube|youtu|youtube-nocookie)\.(com|be)/'
-        '(watch\?v=|embed/|v/|.+\?v=)?([^&=%\?]{11})'
-    )
-    match = re.match(youtube_url_pattern, url)
-    return bool(match)
-
-@app.route('/summary', methods=['GET'])
 def summary_api():
     try:
         url = request.args.get('url', '')
@@ -46,11 +32,24 @@ def summary_api():
             return jsonify({"error": "Failed to generate summary."}), 500
 
         return jsonify({"summary": summary})
-
+    
     except Exception as e:
         # Log the error
         app.logger.error('Error occurred: %s', str(e))
         return jsonify({"error": str(e)}), 500
+
+def validate_youtube_url(url):
+    """
+    Validates if the provided URL is a valid YouTube video URL.
+    Returns True if valid, False otherwise.
+    """
+    youtube_url_pattern = (
+        r'(https?://)?(www\.)?'
+        '(youtube|youtu|youtube-nocookie)\.(com|be)/'
+        '(watch\?v=|embed/|v/|.+\?v=)?([^&=%\?]{11})'
+    )
+    match = re.match(youtube_url_pattern, url)
+    return bool(match)
 
 def extract_video_id(url):
     try:
@@ -90,5 +89,5 @@ if __name__ == '__main__':
     import logging
     logging.basicConfig(filename='app.log', level=logging.DEBUG)
 
-    # Run the Flask app
-    app.run(debug=True)
+    # Run the Flask app on port 5500
+    app.run(debug=True, port=5500)
