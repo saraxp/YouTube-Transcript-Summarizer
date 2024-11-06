@@ -1,14 +1,20 @@
+// Elements
 const btn = document.getElementById("summarise");
+const copyButton = document.getElementById("copy-button");
+const themeToggle = document.getElementById("theme-toggle");
+const themeIcon = document.getElementById("theme-icon");
+const popupContainer = document.getElementById("popup-container");
+const toast = document.getElementById("toast");
 
+// Summarize Button Event
 btn.addEventListener("click", function() {
     btn.disabled = true;
-    btn.innerHTML = "Summarising...";
+    btn.innerHTML = "Summarizing..."
 
     // Retrieve URL of active tab
-    chrome.tabs.query({currentWindow: true, active: true}, function(tabs){
-        var url = tabs[0].url;
+    chrome.tabs.query({ currentWindow: true, active: true }, function(tabs) {
+        const url = tabs[0].url;
 
-       
         function fetchSummary() {
             fetch('http://localhost:5500/summary?url=' + encodeURIComponent(url))
                 .then(response => {
@@ -18,26 +24,26 @@ btn.addEventListener("click", function() {
                     return response.json();
                 })
                 .then(data => {
-                    // Display summary 
+                    // Display summary
                     const summary = data.summary;
-                    const p = document.getElementById("output");
-                    p.innerText = summary;
-                    
-                    // Re-enable button 
+                    summaryBox.innerText = summary;
+
+                    // Hide error box in case it was displayed
+                    errorBox.style.display = "none";
+
+                    // Re-enable button and reset text
                     btn.disabled = false;
-                    btn.innerHTML = "Summarise";
+                    btn.innerHTML = "Summarize";
                 })
                 .catch(error => {
-                    // Log the error
+                    // Log and display the error
                     console.error('Error:', error);
+                    errorBox.innerText = "Error: Unable to summarize video.";
+                    errorBox.style.display = "block";
 
-                    // Display error message
-                    const p = document.getElementById("output");
-                    p.innerText = "Error: Unable to summarize video.";
-
-                    // Re-enable button 
+                    // Re-enable button and reset text
                     btn.disabled = false;
-                    btn.innerHTML = "Summarise";
+                    btn.innerHTML = "Summarize";
                 });
         }
 
@@ -45,3 +51,24 @@ btn.addEventListener("click", function() {
         fetchSummary();
     });
 });
+
+// Theme Toggle Button Event
+themeToggle.addEventListener("click", () => {
+    popupContainer.classList.toggle("dark-theme");
+    popupContainer.classList.toggle("light-theme");
+
+    // Change icon based on theme
+    if (popupContainer.classList.contains("dark-theme")) {
+        themeIcon.innerText = "sunny"; // Sun icon for light theme
+    } else {
+        themeIcon.innerText = "dark_mode"; // Moon icon for dark theme
+    }
+});
+
+// Function to Show Toast
+function showToast() {
+    toast.classList.add("show");
+    setTimeout(() => {
+        toast.classList.remove("show");
+    }, 1500); // Hide after 1.5 seconds
+}

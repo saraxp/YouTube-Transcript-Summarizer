@@ -1,66 +1,177 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>Youtube Transcript Summariser</title>
-        <style>
-            .popup {
-                background-color: rgb(212, 220, 205);
-                width: 300px;
-                height: 50px;
-            }
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <title>Summarizer Popup</title>
+    <style>
+        /* Inner Container Styling with Reduced Size */
+        .popup-container {
+            width: 320px; /* Smaller width */
+            padding: 15px; /* Reduced padding */
+            border-radius: 15px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s, color 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
 
+        /* Light and Dark Theme Colors */
+        .light-theme {
+            background-color: #f0f0f5;
+            color: #333;
+        }
 
-            body{
-                font-family: Arial, sans-serif;
-                background-color: rgb(212, 220, 205);
-            }
+        .dark-theme {
+            background-color: #2c2c34;
+            color: #f0f0f5;
+        }
 
-            h1 {
-                text-align: center;
-                color: rgb(43, 61, 65); 
-                margin-bottom: 20px; 
-            }
+        /* Title Styling */
+        h1 {
+            text-align: center;
+            color: inherit;
+            margin-bottom: 15px; /* Less margin */
+            font-size: 20px; /* Smaller font size */
+        }
 
-            button {
-                /* Common styles */
-                font-size: 18px;
-                padding: 12px 20px;
-                border-radius: 4px;
-                border: none;
-                margin: auto;
-                display: block;
-                cursor: pointer; 
+        /* Button Styling */
+        .button {
+            font-size: 16px; /* Slightly smaller font */
+            padding: 8px 12px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            background-color: #5b8cfa;
+            color: #fff;
+            transition: background-color 0.3s;
+            display: block;
+            margin: 10px auto;
+        }
 
-                /* Enabled button styles */
-                background-color: rgb(73, 190, 170); 
-                color: #fff; 
-                border-color: rgb(85, 12, 24);
-            }
+        .button:hover {
+            background-color: #4874c5;
+        }
 
-            button:hover {
-                background-color: rgb(85, 12, 24);
-            }
+        /* Disabled Button */
+        .button[disabled] {
+            background-color: #cfd8dc;
+            cursor: not-allowed;
+        }
 
-            button[disabled] {
-                background-color: rgb(255, 232, 225); 
-                border-color: rgb(212, 220, 205); 
-                cursor: not-allowed;
-            }
+        /* Copy Button */
+        .copy-button {
+            font-size: 14px;
+            padding: 6px 10px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            background-color: #c776fa;
+            color: #fff;
+            transition: background-color 0.3s;
+            margin-top: 8px;
+            display: block;
+            text-align: center;
+        }
 
-            p {
-                font-size: 16px;
-                color: rgb(43, 61, 65);
-                margin-bottom: 20px;
-            }
-        </style>
-    </head>
-    <body>
-            <div class="popup">
-                <h1>Youtube Transcript Summariser</h1>
-                <button id="summarise" type="button">Summarise</button>
-                <br/>
-                <p id="output"></p>
-            </div>
-        <script src="popup.js"></script>
-    </body>
+        .copy-button:hover {
+            background-color: #a260c4;
+        }
+
+        /* Theme Toggle Button */
+        .theme-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            outline: none;
+            color: #ff8ecf;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        /* Summary Box */
+        .summary-box {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: #f9f9ff;
+            color: #333;
+            min-height: 80px; /* Reduced height */
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Error Message */
+        .error-box {
+            margin-top: 8px;
+            padding: 8px;
+            border-radius: 6px;
+            background-color: rgba(255, 0, 0, 0.2);
+            color: #c0392b;
+            font-size: 12px;
+            text-align: center;
+            transition: background-color 0.3s, color 0.3s;
+            display: none;
+        }
+
+        /* Dark theme adjustments for specific elements */
+        .dark-theme .summary-box {
+            background-color: #444;
+            color: #fff;
+        }
+
+        .dark-theme .error-box {
+            background-color: rgba(255, 0, 0, 0.3);
+            color: #ffb3b3;
+        }
+
+        /* Toast Notification Styling */
+       /* Toast Notification Styling (Smaller) */
+        .toast {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: #fff;
+            padding: 5px 10px; /* Smaller padding */
+            border-radius: 4px; /* Rounded corners */
+            font-size: 10px; /* Smaller font size */
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            max-width: 200px; /* Limits the width */
+            text-align: center; /* Center-aligns text */
+        }
+
+        .toast.show {
+            display: block;
+            opacity: 1;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="popup-container light-theme" id="popup-container">
+        <button class="theme-toggle" id="theme-toggle">
+            <span class="material-symbols-outlined" id="theme-icon">dark_mode</span>
+        </button>
+        <h1>Transcript Summarizer</h1>
+        <button class="button" id="summarise">Summarize</button>
+        <div class="error-box" id="error-box">Error: Unable to summarize video.</div>
+        <div class="summary-box" id="output">Summary will appear here.</div>
+        <button class="copy-button" id="copy-button">Copy Summary</button>
+        <div class="toast" id="toast">Copied to clipboard!</div>
+    </div>
+
+    <script src="popup.js"></script>
+
+</body>
 </html>
