@@ -11,7 +11,7 @@ CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True, allow_
 summarizer = pipeline("summarization")
 
 def validate_youtube_url(url):
-    """Validates if the provided URL is a valid YouTube video URL."""
+    # Validates if the provided URL is a valid YouTube video URL.
     youtube_url_pattern = (
         r'(https?://)?(www\.)?'
         '(youtube|youtu|youtube-nocookie)\.(com|be)/'
@@ -20,7 +20,7 @@ def validate_youtube_url(url):
     return bool(re.match(youtube_url_pattern, url))
 
 def extract_video_id(url):
-    """Extracts video ID from a YouTube URL."""
+    # Extracts video ID from a YouTube URL.
     try:
         match = re.search(r'(?<=v=)[^&]+', url)
         return match.group(0) if match else None
@@ -29,7 +29,7 @@ def extract_video_id(url):
         return None
 
 def get_transcript(video_id):
-    """Retrieves the transcript of a YouTube video by video ID."""
+    # Retrieves the transcript of a YouTube video by video ID.
     try:
         transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
         return ' '.join([d['text'] for d in transcript_list])
@@ -84,5 +84,4 @@ def summary_api():
 
 
 if __name__ == '__main__':
-    # Run the Flask app on port 5500
     app.run(debug=True, port=5500)
