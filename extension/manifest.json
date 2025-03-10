@@ -6,11 +6,28 @@
     "permissions": [
         "activeTab",
         "storage",
-        "tabs"
+        "tabs",
+        "declarativeNetRequest"
     ],
     "host_permissions": [
-        "http://localhost:5500/summary"
+        "https://www.youtube.com/*",
+        "http://localhost:5000/summary"
     ],
+    "content_scripts": [
+        {
+            "matches": ["https://www.youtube.com/*"],
+            "js": ["content.js"]
+        }
+    ],
+    "declarative_net_request": {
+        "rule_resources": [
+            {
+                "id": "ruleset_1",
+                "enabled": true,
+                "path": "rules.json"
+            }
+        ]
+    },
     "action": {
         "default_title": "Summarise this video",
         "default_popup": "popup.html",

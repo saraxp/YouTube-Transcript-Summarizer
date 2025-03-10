@@ -1,0 +1,256 @@
+/*FONTS*/
+@import url('https://fonts.googleapis.com/css2?family=Chivo+Mono:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Chivo:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Chocolate+Classical+Sans&display=swap');
+
+
+/*POP-UP STYLING*/
+html{
+    width: 429px;
+    height: 398px;
+}
+
+body {
+    background-color: #FD1333;
+    transition: background-color 0.3s ease-in-out;
+}
+
+h1 {
+    font-family: 'Chivo Mono', monospace;
+    font-weight: 400;
+    text-align: center;
+    color: inherit;
+    margin: 0px;
+    font-size: 20px;
+}
+
+p{
+    font-family: 'Chivo', sans-serif;
+    font-size: 18px;
+}
+
+.popUp-section{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.popup-container {
+    width: 411px;
+    height: 376px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    border-radius: 15px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.box-section{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0px;
+}
+
+.buttons-section {
+    display: flex;
+    width: 350px;
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+.title-section {
+    margin: 0px;
+    padding: 0px;
+}
+
+.theme-toggle, .copy-button{
+    padding: 0;
+    margin: 0;
+}
+
+.summary-box {
+    width: 330px;
+    height: 200px;
+    border-radius: 40px;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    position: relative;
+    align-self: center;
+    font-family: 'Chocolate Classical Sans', sans-serif;
+    text-align: start;
+    overflow-y: auto;
+    overflow-x: hidden;
+    word-wrap: break-word;
+    scrollbar-width: none;
+}
+.summary-box::-webkit-scrollbar {
+    display: none;
+}
+
+.moon-icon, .copy-icon, .sun-icon {
+    color: #0A0808;
+}
+/* Button Styling */
+.button {
+    font-size: 16px;
+    font-family: 'Chivo', sans-serif; 
+    padding: 8px 12px;
+    border-radius: 15px;
+    border-color: #FD1333;
+    border-width: 1px;
+    cursor: pointer;
+    background-color: #FFFFFF;
+    color: #0A0808;
+    display: block;
+}
+
+.button:hover {
+    background-color:#e1dede ;
+}
+
+/* Disabled Button */
+.button[disabled] {
+    background-color: #cfd8dc;
+    cursor: not-allowed;
+}
+
+/* Copy Button */
+.copy-button {
+    height: 30px;
+    width: 30px;
+    position: fixed;
+    left: 40px;
+    border: none;
+    cursor: pointer;
+    background-color: transparent;
+    display: block;
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+    height: 30px;
+    width: 30px;
+    position: fixed;
+    right: 40px;
+    cursor: pointer;
+    border: none;
+    background-color: transparent;
+    display: block;
+}
+
+/* Error Message */
+.error-box {
+    margin-top: 8px;
+    margin-left: 20px;
+    margin-right:20px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-left: 5px;
+    padding-right: 5px;
+    border-radius: 40px;
+    background-color:#FCF9FA;
+    border-color: #FD1333;
+    border-style: solid;
+    border-width: 2px;
+    color: #0A0808;
+    font-size: 16px;
+    text-align: center;
+    transition: background-color 0.3s, color 0.3s;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.error-box.error-icon{
+    color: #0A0808;
+}
+
+/* Toast Notification Styling */
+.toast {
+    position: absolute;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: #fff;
+    padding: 5px 10px; 
+    border-radius: 4px; 
+    font-size: 10px;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+    max-width: 200px; 
+    text-align: center; 
+}
+
+.toast.show {
+    display: block;
+    opacity: 1;
+}
+
+/* Light and Dark Theme Colors */
+.light-theme {
+    background-color: #FCF9FA;
+    color: #0A0808;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    .summary-box {
+        background-color: #E691994D; 
+        margin-top: 10px;
+    }  
+
+}
+
+
+.dark-theme {
+    background-color: #0A0808;
+    h1{
+        color: #FFFFFF;  
+    }
+    .popup-container{
+        background-color: #533D64;
+    }
+    .summary-box {
+        color: #FFFFFF;
+        background-color: #B1809A4D; /* 20% opacity */
+    } 
+    .button {
+        font-size: 16px;
+        font-family: 'Chivo', sans-serif; 
+        padding: 8px 12px;
+        border-radius: 15px;
+        border-color: #B5CDAD;
+        border-width: 1px;
+        cursor: pointer;
+        background-color: #FFFFFF;
+        color: #533D64;
+        display: block;
+    }
+    .moon-icon, .copy-icon, .sun-icon {
+        color: #B5CDAD;
+    }
+    .error-box {
+        background-color:#B1809A4D;
+        border-color: #B5CDAD;
+        border-style: solid;
+        border-width: 2px;
+        color: #FCF9FA;
+        display: none;
+    }
+
+    .error-box.error-icon{
+        color: #FCF9FA;
+    }
+}
+
+
