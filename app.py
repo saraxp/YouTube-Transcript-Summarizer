@@ -1,132 +1,132 @@
-import re
-import textwrap
 from flask import Flask, request, jsonify
-from flask_cors import CORS, cross_origin
-from youtube_transcript_api import YouTubeTranscriptApi
-from transformers import pipeline
+import subprocess
+import tempfile
+from pathlib import Path
+import re
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}}, 
-        supports_credentials=True, 
-        allow_headers=["Content-Type", "Authorization"], 
-        methods=["GET", "POST", "OPTIONS"])
 
-# Initialize summarization pipeline
-summarizer = pipeline("summarization", model="t5-large")
-print("Model loaded!")
+# === TRANSCRIPT EXTRACTOR ===
+class YTDLPCommandLineExtractor:
+    @staticmethod
+    def is_available():
+        try:
+            result = subprocess.run(['yt-dlp', '--version'], capture_output=True, text=True, timeout=5)
+            return result.returncode == 0
+        except:
+            return False
 
-def validate_youtube_url(url):
-    # Validates if the provided URL is a valid YouTube video URL.
-    youtube_url_pattern = r"(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/"
-    return bool(re.match(youtube_url_pattern, url))
+    @staticmethod
+    def get_transcript(video_id):
+        if not YTDLPCommandLineExtractor.is_available():
+            return None, "yt-dlp not available. Please install yt-dlp."
 
-def extract_video_id(url):
-    # Extracts video ID from a YouTube URL.
+        try:
+            url = f'https://www.youtube.com/watch?v={video_id}'
+            temp_dir = tempfile.gettempdir()
+            cmd = [
+                'yt-dlp',
+                '--write-subs',
+                '--write-auto-subs',
+                '--sub-langs', 'en,en-US,en-GB',
+                '--sub-format', 'vtt',
+                '--skip-download',
+                '--output', f'{temp_dir}/%(id)s.%(ext)s',
+                url
+            ]
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+
+            if result.returncode != 0:
+                return None, f"yt-dlp failed: {result.stderr}"
+
+            subtitle_files = list(Path(temp_dir).glob(f'{video_id}*.vtt'))
+            if subtitle_files:
+                with open(subtitle_files[0], 'r', encoding='utf-8') as f:
+                    vtt_content = f.read()
+
+                # Clean up
+                for file in subtitle_files:
+                    try:
+                        file.unlink()
+                    except:
+                        pass
+
+                transcript = YTDLPCommandLineExtractor.parse_vtt(vtt_content)
+                return transcript, None if transcript.strip() else "Transcript was empty"
+            
+            return None, "No subtitle file found"
+
+        except subprocess.TimeoutExpired:
+            return None, "yt-dlp timeout"
+        except Exception as e:
+            return None, str(e)
+
+    @staticmethod
+    def parse_vtt(vtt_content):
+        # Remove timestamps and metadata
+        text = re.sub(r"(\d{2}:\d{2}:\d{2}\.\d{3} --> .*\n)?", "", vtt_content)
+        text = re.sub(r"Kind:.*\n|Language:.*\n|Translator:.*\n|Reviewer:.*\n", "", text)
+        return text.strip()
+
+# === OLLAMA CALL ===
+def summarize_with_mistral(transcript):
     try:
-        match = re.search(r'(?<=v=)[^&]+', url)
-        return match.group(0) if match else None
+        cmd = ['ollama', 'run', 'mistral']
+        process = subprocess.Popen(
+            cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="replace"
+        )
+        prompt = f"Please provide a concise summary of this YouTube video transcript:\n\n{transcript}\n\nSummary:"
+        stdout, stderr = process.communicate(prompt, timeout=120)
+
+        if process.returncode != 0:
+            error_msg = f"Ollama error (code {process.returncode}): {stderr.strip()} | {stdout.strip()}"
+            return None, error_msg
+        return stdout.strip(), None
+
+    except subprocess.TimeoutExpired:
+        process.kill()
+        stdout, stderr = process.communicate()
+        return None, "Ollama summarization timed out"
     except Exception as e:
-        app.logger.error('Error occurred while extracting video ID: %s', str(e))
-        return None
-
-def get_transcript(video_id):
-    # Retrieves the transcript of a YouTube video by video ID.
-    try:
-        transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
-        transcript = ' '.join([d['text'] for d in transcript_list])
-        print(f"Transcript Retrieved: {transcript[:100]}...") 
-        return transcript
-    except Exception as e:
-        app.logger.error('Error occurred while retrieving transcript: %s', str(e))
-        return None
+        return None, str(e)
 
 
-def clean_transcript(transcript):
-    """ Removes redundant sentences and cleans transcript """
-    sentences = transcript.split(". ")
-    unique_sentences = []
-    seen = set()
+# === FLASK ROUTE ===
+@app.route('/summarize', methods=['POST'])
+def summarize():
+    data = request.get_json()
+    if not data or 'url' not in data:
+        return jsonify({"error": "No URL provided"}), 400
 
-    for sentence in sentences:
-        cleaned = sentence.strip()
-        if cleaned and cleaned not in seen:
-            unique_sentences.append(cleaned)
-            seen.add(cleaned)
+    url = data['url']
+    video_id_match = re.search(r"v=([a-zA-Z0-9_-]+)", url)
+    if not video_id_match:
+        return jsonify({"error": "Invalid YouTube URL"}), 400
 
-    return ". ".join(unique_sentences)
+    video_id = video_id_match.group(1)
 
-def chunk_transcript(transcript, max_chars=1024):
-    """ Breaks transcript into chunks at sentence boundaries """
-    sentences = transcript.split(". ")
-    chunks = []
-    current_chunk = ""
+    # Get transcript
+    transcript, error = YTDLPCommandLineExtractor.get_transcript(video_id)
+    if error:
+        return jsonify({"error": f"Transcript extraction failed: {error}"}), 500
 
-    for sentence in sentences:
-        if len(current_chunk) + len(sentence) < max_chars:
-            current_chunk += sentence + ". "
-        else:
-            chunks.append(current_chunk.strip())
-            current_chunk = sentence + ". "
+    # Summarize with Mistral
+    summary, error = summarize_with_mistral(transcript)
+    if error:
+        return jsonify({"error": f"Summarization failed: {error}"}), 500
 
-    if current_chunk:
-        chunks.append(current_chunk.strip())
-
-    return chunks
+    return jsonify({
+        "summary": summary,
+        "transcript": transcript
+    })
 
 
-def get_summary(transcript):
-    try:
-        if len(transcript) < 100:
-            return "Transcript is too short to summarize."
-
-        # Clean & break transcript at proper sentence boundaries
-        transcript = clean_transcript(transcript)
-        chunks = chunk_transcript(transcript)
-
-        summaries = []
-        for chunk in chunks:
-            max_len = min(300, len(chunk) // 2)  # Ensure max length is dynamic
-            chunk_summary = summarizer(chunk, max_length=max_len, min_length=100, do_sample=False)[0]['summary_text']
-            summaries.append(chunk_summary)
-
-        # **Final Pass: Summarize the Summaries to Improve Context**
-        final_summary_text = " ".join(summaries)
-        if len(final_summary_text) > 1024:  # Ensure it's not too long
-            final_summary = summarizer(final_summary_text, max_length=250, min_length=100, do_sample=False)[0]['summary_text']
-        else:
-            final_summary = final_summary_text
-
-        return final_summary.strip()
-
-    except Exception as e:
-        app.logger.error('Error occurred while generating summary: %s', str(e))
-        return None
-
-
-@app.route('/summary', methods=['GET'])
-@cross_origin(origin='*')
-def summary_api():
-    url = request.args.get('url', '')
-    if not url:
-        return jsonify({"error": "URL parameter is missing."}), 400
-
-    # Validate the URL (use your validate_youtube_url function)
-    if not validate_youtube_url(url):
-        return jsonify({"error": "Invalid YouTube video URL."}), 400
-
-    # Extract video ID and retrieve transcript (use your existing functions)
-    video_id = extract_video_id(url)
-    transcript = get_transcript(video_id)
-    if not transcript:
-        return jsonify({"error": "Failed to retrieve transcript."}), 500
-
-    # Generate summary
-    summary = get_summary(transcript)
-    if not summary:
-        return jsonify({"error": "Failed to generate summary."}), 500
-
-    return jsonify({"summary": summary})
-
-
+# === MAIN ===
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(port=5500, debug=True)
