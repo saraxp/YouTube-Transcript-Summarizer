@@ -1,5 +1,6 @@
 // Elements
 const btn = document.getElementById("summarise");
+const loader = document.getElementById("loading");
 const copyButton = document.getElementById("copy-button");
 const themeToggle = document.getElementById("theme-toggle");
 const themeIcon = document.getElementById("theme-icon");
@@ -7,19 +8,37 @@ const popupContainer = document.getElementById("popup-container");
 const popup = document.getElementById("body");
 const toast = document.getElementById("toast");
 
+loader.style.display = "none";
+
+function showButton() {
+    loader.style.display = "none";
+    btn.style.display = "block";
+    btn.disabled = false;
+}
+
+function showCustomAlert(message) {
+  document.getElementById("custom-alert-message").innerText = message;
+  document.getElementById("custom-alert").style.display = "block";
+}
+
+function hideCustomAlert() {
+  document.getElementById("custom-alert").style.display = "none";
+}
+
+
 
 // Summarize Button Event
 btn.addEventListener("click", function() {
-    btn.disabled = true;
-    btn.innerHTML = "Summarizing...";
+    btn.style.display = "none";
+    loader.style.display = "block";
 
     chrome.tabs.query({ currentWindow: true, active: true }, function(tabs) {
         const url = tabs[0].url;
 
         if (!url.includes("youtube.com/watch")) { // Corrected URL
-            alert("Please open a YouTube video tab to summarize.");
-            btn.disabled = false;
-            btn.innerHTML = "Summarize";
+            showCustomAlert("Please open a YouTube video tab to summarize.");
+            document.getElementById("custom-alert-ok").addEventListener("click", hideCustomAlert)
+            showButton();
             return;
         }
 
@@ -35,20 +54,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.type === "SUMMARY_RESULT") {
         const summaryBox = document.getElementById("output");
         const errorBox = document.getElementById("error-box");
-        const summarizeButton = document.getElementById("summarise");
 
         if (request.success) {
             summaryBox.style.display = "block";
             summaryBox.innerText = request.summary;
             errorBox.style.display = "none";
-            summarizeButton.innerText = "Summarize";
         } else {
             errorBox.style.display = "flex";
             errorBox.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" viewBox="0 0 256 256"><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM222.93,203.8a8.5,8.5,0,0,1-7.48,4.2H40.55a8.5,8.5,0,0,1-7.48-4.2,7.59,7.59,0,0,1,0-7.72L120.52,44.21a8.75,8.75,0,0,1,15,0l87.45,151.87A7.59,7.59,0,0,1,222.93,203.8ZM120,144V104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,180Z"></path></svg><p>Error: ${request.error || "Unable to retrieve transcript."} Try a different video.</p>`;
             summaryBox.style.display = "none";
-            summarizeButton.innerText = "Retry";
+            btn.innerText = "Retry";
         }
-        summarizeButton.disabled = false;
+        showButton();
     }
 });
 
