@@ -22,5 +22,5 @@ Dark Theme-
 
 <img src="preview/one-d.png" alt width="400px" > 
 <img src="preview/two-d.png" alt width="400px"> 
-<img src="preview/three-d.png" alt witdh="300px"> 
+<img src="preview/three-d.png" alt witdh="200px"> 
 
