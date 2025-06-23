@@ -1,13 +1,12 @@
-// background.js (service worker)
 
-const FLASK_SERVER_URL = "http://localhost:5500"; // Ensure this matches your Flask server's address
+const FLASK_SERVER_URL = "http://localhost:5500"; 
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.type === "SUMMARIZE_VIDEO") {
         const url = request.url;
         console.log("Background script received request to summarize URL:", url);
 
-        fetch(`${FLASK_SERVER_URL}/summarize`, { // Ensure this matches your Flask route
+        fetch(`${FLASK_SERVER_URL}/summarize`, { 
             method: "POST",
             headers: {
                 "Content-Type": "application/json"

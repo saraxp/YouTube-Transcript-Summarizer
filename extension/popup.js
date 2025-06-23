@@ -35,7 +35,7 @@ btn.addEventListener("click", function() {
     chrome.tabs.query({ currentWindow: true, active: true }, function(tabs) {
         const url = tabs[0].url;
 
-        if (!url.includes("youtube.com/watch")) { // Corrected URL
+        if (!url.includes("youtube.com/watch")) {
             showCustomAlert("Please open a YouTube video tab to summarize.");
             document.getElementById("custom-alert-ok").addEventListener("click", hideCustomAlert)
             showButton();
